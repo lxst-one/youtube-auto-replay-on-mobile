@@ -5,9 +5,7 @@
 // @description  Auto replay video option on mobile version
 // @author       lxst-one
 // @match        https://www.youtube.com/*
-// @match        https://www.youtube-nocookie.com/*
 // @match        https://m.youtube.com/*
-// @match        https://music.youtube.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=YouTube.com
 // @grant        none
 // @run-at       document-idle
@@ -19,13 +17,55 @@
 
     const optionHTML = '<div class="auto-replay-content">Auto replay</div><button id="btn-auto-replay" class="c3-material-toggle-button" aria-label="Auto replay" aria-pressed="false"><div class="c3-material-toggle-button-track"></div><div class="c3-material-toggle-button-circle"></div></button>';
     var autoReplay = false;
+    var bodyObserver = null;
+    var videoObserver = null;
+    var urlObserver = null;
+    var urlChangedEvent = null;
 
     function main() {
-        initBodyObserver();
-        initVideoObserver();
+        createUrlChangedEvent();
+        initUrlObserver();
+
+        document.addEventListener('url-changed', (e) => {
+            if(bodyObserver) {
+                bodyObserver.disconnect();
+            }
+
+            if(videoObserver) {
+               videoObserver.disconnect();
+            }
+
+            initBodyObserver();
+            initVideoObserver();
+        });
+
+        dispatchUrlChangedEvent();
     }
 
-    async function insertAutoReplayOption() {
+    function createUrlChangedEvent() {
+        urlChangedEvent = new CustomEvent('url-changed');
+    }
+
+    function dispatchUrlChangedEvent() {
+        if(urlChangedEvent === null) {
+           console.log('Failed to dispatch url changed event');
+           return;
+        }
+
+        document.dispatchEvent(urlChangedEvent);
+    }
+
+    function initUrlObserver() {
+        let currentUrl = window.location.href;
+        setInterval(() => {
+            if(currentUrl != window.location.href) {
+                currentUrl = window.location.href;
+                dispatchUrlChangedEvent();
+            }
+        }, 700);
+    }
+
+    function insertAutoReplayOption() {
         if(document.querySelector('div.auto-replay-setting')) {
             //Already exists
             return;
@@ -54,8 +94,8 @@
         setAutoReplayButtonState();
     }
 
-    async function initBodyObserver() {
-        const observer = new MutationObserver((mutations) => {
+    function initBodyObserver() {
+        bodyObserver = new MutationObserver((mutations) => {
             mutations.some((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if(node.tagName === 'DIV' && node.classList.contains('dialog-container')) {
@@ -65,7 +105,7 @@
             });
         });
 
-        observer.observe(document.body, {childList: true});
+        bodyObserver.observe(document.body, {childList: true});
     }
 
     function initAutoReplayButtonEvent() {
@@ -88,9 +128,13 @@
         button.setAttribute('aria-pressed', autoReplay)
     }
 
-    async function initVideoObserver() {
+    function initVideoObserver() {
         let videoContainer = document.querySelector('div#movie_player');
-        const observer = new MutationObserver((mutations) => {
+        if(videoContainer === null) {
+            return;
+        }
+
+        videoObserver = new MutationObserver((mutations) => {
             mutations.some((mutation) => {
                 if(autoReplay && mutation.target.classList.contains('ended-mode')) {
                     let replayBtn = document.querySelector('button.endscreen-replay-button');
@@ -101,7 +145,7 @@
             });
         });
 
-        observer.observe(videoContainer, {attributeFilter: ['class']});
+        videoObserver.observe(videoContainer, {attributeFilter: ['class']});
     }
 
     main();
