@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube auto replay on mobile
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Auto replay video option on mobile version
 // @author       lxst-one
 // @match        https://www.youtube.com/*
