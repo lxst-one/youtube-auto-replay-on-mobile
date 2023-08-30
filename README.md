@@ -1,2 +1,7 @@
-# youtube-auto-replay-on-mobile
-Tampermonkey script which add auto replay option on mobile site version
+# About
+
+Tampermonkey script which add auto replay option on youtube mobile version.
+
+# Preview
+
+![Alt text](/preview.png?raw=true)
